@@ -10,13 +10,6 @@ const fs = require('fs')
 const program = require('commander');
 
 let setting = {}
-program
-    .version('0.1.0')
-    .option('-i, --input [value]', 'Add setting file', function (arg) {
-        const data = fs.readFileSync(arg, 'utf8');
-        setting = JSON.parse(data)
-    })
-    .parse(process.argv);
 
 const app = new Koa();
 app.use(koaBody({ multipart: true }));
@@ -107,10 +100,17 @@ app.use(async ctx => {
             ctx.body = data
         }
     } catch (error) {
-        ctx.body = error.response.body
+        ctx.body = error.response ? error.response.body : error
     }
 });
 
-app.listen(3000, function () {
-    console.log('Server start...');
-});
+program
+    .version('0.1.0')
+    .option('-i, --input [value]', 'Add setting file', function (arg) {
+        const data = fs.readFileSync(arg, 'utf8');
+        setting = JSON.parse(data)
+        app.listen(3000, function () {
+            console.log('Server start...');
+        });
+    })
+    .parse(process.argv);
