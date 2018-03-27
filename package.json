@@ -1,0 +1,19 @@
+{
+  "name": "router",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "author": "anson",
+  "scripts": {
+    "start": "node ./src/app.js -i ./router.json"
+  },
+  "dependencies": {
+    "commander": "^2.15.1",
+    "koa": "^2.5.0",
+    "koa-body": "^2.5.0",
+    "lodash": "^4.17.5",
+    "request": "^2.85.0",
+    "request-promise": "^4.2.2",
+    "url-parse": "^1.2.0"
+  }
+}

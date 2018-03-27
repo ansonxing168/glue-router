@@ -1,0 +1,59 @@
+{
+    "backends": [
+        {
+            "name": "upload",
+            "url": "http://db-and-mid.localdomain:8080/v1/upload/saas-doc",
+            "passthroughHeaders": {
+                "excludes": ["host", "content-length"]
+            }
+        },
+        {
+            "name": "download",
+            "url": "http://db-and-mid.localdomain:8080/v1/download/saas-doc",
+            "passthroughHeaders": {
+                "excludes": ["host", "content-length"]
+            }
+        },
+        {
+            "name": "profiles",
+            "url": "http://fanyi.cloudapps.localdomain/apis/uaa/v1/users/profiles",
+            "passthroughHeaders": {
+                "excludes": ["host", "content-length"]
+            }
+        },
+        {
+            "name": "users",
+            "url": "http://fanyi.cloudapps.localdomain/apis/uaa/v1/users",
+            "passthroughHeaders": {
+                "excludes": ["host", "content-length"]
+            }
+        },
+        {
+            "name": "default",
+            "url": "http://default-service"
+        }
+    ],
+    "routes": [
+        {
+            "frontend": "/upload/saas-doc",
+            "backendRef": "upload"
+        },
+        {
+            "frontend": "/download/saas-doc",
+            "backendRef": "download"
+        },
+        {
+            "frontend": "/uaa/v1/users/profiles",
+            "backendRef": "profiles",
+            "rules": [{
+                "src": "id",
+                "tgt": "subUser",
+                "backendRef": "users"
+            }, {
+                "src": "id",
+                "tgt": "subUser2",
+                "backendRef": "users"
+            }]
+        }
+    ]
+}
