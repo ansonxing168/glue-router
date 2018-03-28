@@ -1,17 +1,19 @@
-const Koa = require('koa');
-const rp = require('request-promise');
-const koaBody = require('koa-body');
-const parse = require('url-parse');
-const omit = require('lodash/omit')
-const get = require('lodash/get')
-const set = require('lodash/set')
-const isArray = require('lodash/isArray')
-const fs = require('fs')
-const program = require('commander');
+const Koa = require('koa'),
+    rp = require('request-promise'),
+    koaBody = require('koa-body'),
+    logger = require('koa-logger'),
+    parse = require('url-parse'),
+    omit = require('lodash/omit'),
+    get = require('lodash/get'),
+    set = require('lodash/set'),
+    isArray = require('lodash/isArray'),
+    fs = require('fs'),
+    program = require('commander');
 
 let setting = {}
 
 const app = new Koa();
+app.use(logger());
 app.use(koaBody({ multipart: true }));
 
 searchRoute = (url) => {
@@ -23,9 +25,9 @@ searchBackend = (route, url) => {
     const backendRef = !!route ? route.backendRef : 'default'
     const backend = setting.backends.filter(item => item.name === backendRef)[0]
     if (!!route) {
-        return !!url ? url.replace(route.frontend, backend.url) : backend.url
+        return !!url ? backend.url + url.substr(url.lastIndexOf(route.frontend) + route.frontend.length) : backend.url
     } else {
-        return backend.url = url
+        return backend.url + url
     }
 }
 
@@ -72,7 +74,8 @@ app.use(async ctx => {
         const backendUrl = searchBackend(route, req.url)
 
         let data = await request(req.method, backendUrl, headers, body)
-        if (!!route.rules) {
+
+        if (!!(route || {}).rules) {
             const isArr = isArray(data)
             async function requestData(rule) {
                 let ids = []
@@ -100,14 +103,16 @@ app.use(async ctx => {
             ctx.body = data
         }
     } catch (error) {
+        console.log(error);
         ctx.body = error.response ? error.response.body : error
     }
 });
 
 program
     .version('0.1.0')
-    .option('-i, --input [value]', 'Add setting file', function (arg) {
+    .option('-i, --input [value]', 'set config file', function (arg) {
         const data = fs.readFileSync(arg, 'utf8');
+        console.log(`Set config file: ${arg}`);
         setting = JSON.parse(data)
         app.listen(3000, function () {
             console.log('Server start...');
