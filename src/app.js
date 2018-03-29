@@ -104,6 +104,7 @@ app.use(async ctx => {
         }
     } catch (error) {
         console.log(error);
+        ctx.status = error.statusCode
         ctx.body = error.response ? error.response.body : error
     }
 });
