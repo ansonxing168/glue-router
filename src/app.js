@@ -75,7 +75,7 @@ app.use(async ctx => {
 
         let data = await request(req.method, backendUrl, headers, body)
 
-        if (!!(route || {}).rules) {
+        if (!!(route || {}).rules && !!data) {
             const isArr = isArray(data)
             async function requestData(rule) {
                 let ids = []
