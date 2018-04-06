@@ -6,6 +6,8 @@ const Koa = require('koa'),
     omit = require('lodash/omit'),
     get = require('lodash/get'),
     set = require('lodash/set'),
+    flatMap = require('lodash/flatMap'),
+    zip = require('lodash/zip'),
     isArray = require('lodash/isArray'),
     fs = require('fs'),
     program = require('commander');
@@ -14,7 +16,9 @@ let setting = {}
 
 const app = new Koa();
 app.use(logger());
-app.use(koaBody({ multipart: true }));
+app.use(koaBody({
+    multipart: true
+}));
 
 searchRoute = (url) => {
     const parsed = parse(url)
@@ -35,6 +39,44 @@ buildHeaders = (route, headers) => {
     const backendRef = !!route ? route.backendRef : 'default'
     const backend = setting.backends.filter(item => item.name === backendRef)[0]
     return omit(headers, backend.passthroughHeaders ? backend.passthroughHeaders.excludes : [])
+}
+
+const getIds = (data, path) => {
+    return path.split('.').reduce((result, field) => {
+        let items = []
+        function flatValue(item) {
+            return [].concat(item[field] || [])
+        }
+        if (isArray(result)) {
+            items = flatMap(result, flatValue)
+        } else {
+            items = items.concat(result[field] || [])
+        }
+        return items
+    }, data)
+}
+
+const setVal = (data, path, tgtPath, resps) => {
+    function dissect(obj, fields) {
+        if (isArray(obj)) {
+            obj.map(item => {
+                dissect(item, fields)
+            })
+        } else {
+            if (fields.length === 1) {
+                const field = fields[0]
+                const id = obj[field]
+                const tgt = resps.filter(item => item.id == id)[0]
+                set(obj, tgtPath, tgt)
+            } else if (fields.length > 1) {
+                const field = fields[0]
+                dissect(obj[field], fields.slice(1))
+            }
+        }
+    }
+    const fields = path.split('.')
+    dissect(data, fields)
+    return data
 }
 
 const request = (method, url, headers, body) => {
@@ -76,27 +118,20 @@ app.use(async ctx => {
         let data = await request(req.method, backendUrl, headers, body)
 
         if (!!(route || {}).rules && !!data) {
-            const isArr = isArray(data)
             async function requestData(rule) {
-                let ids = []
-                if (isArr) {
-                    ids = data.map(obj => get(obj, rule.src))
-                } else {
-                    ids = ids.concat(get(data, rule.src))
-                }
+                let ids = getIds(data, rule.src)
                 const subUrl = searchBackend(rule) + '/' + ids.join(',')
                 const subHeaders = buildHeaders(rule, ctx.header)
                 return request('GET', subUrl, subHeaders, {})
             }
             const promises = route.rules.map(requestData)
             const resps = await Promise.all(promises)
-
-            route.rules.forEach((rule, idx) => {
-                if (isArr) {
-                    data = data.map((obj, j) => set(obj, rule.tgt, resps[idx][j]))
-                } else {
-                    data = set(data, rule.tgt, resps[idx])
-                }
+            const zipRRs = zip(rules, resps)
+            // zip result: [[rule, resp], [rule, resp]]
+            zipRRs.forEach(item => {
+                const rule = item[0]
+                const resp = item[1]
+                setVal(data, rule.src, rule.tgt, resp)
             })
             ctx.body = data
         } else {

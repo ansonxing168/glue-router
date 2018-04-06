@@ -15,6 +15,13 @@
             }
         },
         {
+            "name": "users",
+            "url": "http://fanyi.cloudapps.localdomain/apis/uaa/v1/users/query",
+            "passthroughHeaders": {
+                "excludes": ["host", "content-length"]
+            }
+        },
+        {
             "name": "default",
             "url": "http://fanyi.cloudapps.localdomain",
             "passthroughHeaders": {
@@ -30,6 +37,15 @@
         {
             "frontend": "/download/saas-doc",
             "backendRef": "download"
+        },
+        {
+            "frontend": "/saas-docs/v1/saas-docs",
+            "backendRef": "docs",
+            "rules": [{
+                "src": "content.createdBy",
+                "tgt": "createdByMo",
+                "backendRef": "users"
+            }]
         }
     ]
 }
