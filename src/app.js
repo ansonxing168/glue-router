@@ -126,7 +126,7 @@ app.use(async ctx => {
             }
             const promises = route.rules.map(requestData)
             const resps = await Promise.all(promises)
-            const zipRRs = zip(rules, resps)
+            const zipRRs = zip(route.rules, resps)
             // zip result: [[rule, resp], [rule, resp]]
             zipRRs.forEach(item => {
                 const rule = item[0]
