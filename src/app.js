@@ -52,12 +52,13 @@ const getIds = (data, path) => {
         } else {
             items = items.concat(result[field] || [])
         }
-        return items
+        return items.filter(item => !!item)
     }, data)
 }
 
 const setVal = (data, path, tgtPath, resps) => {
     function dissect(obj, fields) {
+        if (!obj) return
         if (isArray(obj)) {
             obj.map(item => {
                 dissect(item, fields)
@@ -66,8 +67,12 @@ const setVal = (data, path, tgtPath, resps) => {
             if (fields.length === 1) {
                 const field = fields[0]
                 const id = obj[field]
-                const tgt = resps.filter(item => item.id == id)[0]
-                set(obj, tgtPath, tgt)
+                if (isArray(resps)) {
+                    const tgt = resps.filter(item => item.id == id)[0]
+                    set(obj, tgtPath, tgt)
+                } else {
+                    set(obj, tgtPath, resps)
+                }
             } else if (fields.length > 1) {
                 const field = fields[0]
                 dissect(obj[field], fields.slice(1))
@@ -120,19 +125,22 @@ app.use(async ctx => {
         if (!!(route || {}).rules && !!data) {
             async function requestData(rule) {
                 let ids = getIds(data, rule.src)
+                if (ids.length === 0) return []
                 const subUrl = searchBackend(rule) + '/' + ids.join(',')
                 const subHeaders = buildHeaders(rule, ctx.header)
                 return request('GET', subUrl, subHeaders, {})
             }
             const promises = route.rules.map(requestData)
-            const resps = await Promise.all(promises)
-            const zipRRs = zip(route.rules, resps)
-            // zip result: [[rule, resp], [rule, resp]]
-            zipRRs.forEach(item => {
-                const rule = item[0]
-                const resp = item[1]
-                setVal(data, rule.src, rule.tgt, resp)
-            })
+            let resps = await Promise.all(promises)
+            if (resps.length !== 0) {
+                const zipRRs = zip(route.rules, resps)
+                // zip result: [[rule, resp], [rule, resp]]
+                zipRRs.forEach(item => {
+                    const rule = item[0]
+                    const resp = item[1]
+                    setVal(data, rule.src, rule.tgt, resp)
+                })
+            }
             ctx.body = data
         } else {
             ctx.body = data

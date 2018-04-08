@@ -50,7 +50,11 @@
             "backendRef": "docs",
             "rules": [{
                 "src": "content.createdBy",
-                "tgt": "createdByMo",
+                "tgt": "createdByVo",
+                "backendRef": "users"
+            }, {
+                "src": "createdBy",
+                "tgt": "createdByVo",
                 "backendRef": "users"
             }]
         }
