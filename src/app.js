@@ -10,9 +10,8 @@ const Koa = require('koa'),
     zip = require('lodash/zip'),
     isArray = require('lodash/isArray'),
     fs = require('fs'),
-    program = require('commander');
-
-let setting = {}
+    program = require('commander')
+let setting = require('glue-router-config')
 
 const app = new Koa();
 app.use(logger());
@@ -158,8 +157,8 @@ program
         const data = fs.readFileSync(arg, 'utf8');
         console.log(`Set config file: ${arg}`);
         setting = JSON.parse(data)
-        app.listen(3000, function () {
-            console.log('Server start...');
-        });
     })
     .parse(process.argv);
+app.listen(3000, function () {
+    console.log('Server start...');
+});

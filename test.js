@@ -3,6 +3,8 @@ const
     set = require('lodash/set'),
     isArray = require('lodash/isArray'),
     flatMap = require('lodash/flatMap')
+config = require('glue-router-config')
+console.log(config);
 
 
 const getIds = (data, path) => {

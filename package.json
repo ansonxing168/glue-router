@@ -5,10 +5,12 @@
   "license": "MIT",
   "author": "anson",
   "scripts": {
-    "start": "node ./src/app.js -i ./router.json"
+    "dev": "node ./src/app.js -i ./router.json",
+    "start": "node ./src/app.js"
   },
   "dependencies": {
     "commander": "^2.15.1",
+    "glue-router-config": "git+https://git.newtranx.com/git/nss/glue-router-config.git",
     "koa": "^2.5.0",
     "koa-body": "^2.5.0",
     "koa-logger": "^3.2.0",
