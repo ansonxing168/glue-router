@@ -11,7 +11,7 @@ const Koa = require('koa'),
     isArray = require('lodash/isArray'),
     fs = require('fs'),
     program = require('commander')
-let setting = require('glue-router-config')
+let setting = {}
 
 const app = new Koa();
 app.use(logger());
