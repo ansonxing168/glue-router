@@ -151,6 +151,7 @@ app.use(async ctx => {
     }
 });
 
+let port = 3000
 program
     .version('0.1.0')
     .option('-i, --input [value]', 'set config file', function (arg) {
@@ -158,7 +159,11 @@ program
         console.log(`Set config file: ${arg}`);
         setting = JSON.parse(data)
     })
+    .option('-p, --port [value]', 'set port', function (arg) {
+        port = arg
+        console.log(`Set server port: ${arg}`);
+    })
     .parse(process.argv);
-app.listen(3000, function () {
+app.listen(port, function () {
     console.log('Server start...');
 });
