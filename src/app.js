@@ -28,7 +28,15 @@ searchBackend = (route, url) => {
     const backendRef = !!route ? route.backendRef : 'default'
     const backend = setting.backends.filter(item => item.name === backendRef)[0]
     if (!!route) {
-        return !!url ? backend.url + url.substr(url.lastIndexOf(route.frontend) + route.frontend.length) : backend.url
+        if (route.removePrefix) {
+            if (typeof(route.removePrefix) === 'string') {
+                return !!url ? backend.url + url.substr(url.lastIndexOf(route.removePrefix) + route.removePrefix.length) : backend.url
+            } else {
+                return !!url ? backend.url + url.substr(url.lastIndexOf(route.frontend) + route.frontend.length) : backend.url
+            }
+        } else {
+            return !!url ? backend.url + url : backend.url
+        }
     } else {
         return backend.url + url
     }
