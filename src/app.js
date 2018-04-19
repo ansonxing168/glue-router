@@ -1,5 +1,6 @@
 const Koa = require('koa'),
     fetch = require('isomorphic-fetch'),
+    rp = require('request-promise'),
     koaBody = require('koa-body'),
     logger = require('koa-logger'),
     parse = require('url-parse'),
@@ -30,7 +31,7 @@ searchBackend = (route, url) => {
     const backend = setting.backends.filter(item => item.name === backendRef)[0]
     if (!!route) {
         if (route.removePrefix) {
-            if (typeof(route.removePrefix) === 'string') {
+            if (typeof (route.removePrefix) === 'string') {
                 return !!url ? backend.url + url.substr(url.lastIndexOf(route.removePrefix) + route.removePrefix.length) : backend.url
             } else {
                 return !!url ? backend.url + url.substr(url.lastIndexOf(route.frontend) + route.frontend.length) : backend.url
@@ -92,11 +93,22 @@ const setVal = (data, path, tgtPath, resps) => {
     return data
 }
 
-const request = (method, url, headers, body, original) => {
+const request = (method, url, headers, body, includeStatus) => {
     let opts = {
         method,
+        url,
         headers: headers,
-        json: true
+        json: true,
+        transform: (body, response) => {
+            if (includeStatus) {
+                return {
+                    status: response.statusCode,
+                    body
+                }
+            } else {
+                return body
+            }
+        }
     }
     if (!!headers['content-type'] && headers['content-type'].indexOf('multipart/form-data') > -1) {
         opts = Object.assign({}, opts, {
@@ -115,11 +127,14 @@ const request = (method, url, headers, body, original) => {
             body
         })
     }
-    if (original) {
-        return fetch(url, opts)
-    } else {
-        return fetch(url, opts).then(resp => resp.json())
-    }
+    return rp(opts).catch(function (error) {
+        if (!includeStatus) {
+            return {
+                error: error.error
+            }
+        }
+        throw error
+    });
 }
 
 // response
@@ -133,7 +148,7 @@ app.use(async ctx => {
 
         const resp = await request(req.method, backendUrl, headers, body, true)
         ctx.status = resp.status
-        let data = await resp.json()
+        let data = resp.body
 
         if (!!(route || {}).rules && !!data) {
             async function requestData(rule) {
@@ -160,7 +175,7 @@ app.use(async ctx => {
         }
     } catch (error) {
         console.log(error);
-        ctx.status = error.statusCode
+        ctx.status = error.statusCode || 400
         ctx.body = error.response ? error.response.body : error
     }
 });
