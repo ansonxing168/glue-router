@@ -1,11 +1,12 @@
 const Koa = require('koa'),
-    rp = require('request-promise'),
+    fetch = require('isomorphic-fetch'),
     koaBody = require('koa-body'),
     logger = require('koa-logger'),
     parse = require('url-parse'),
     omit = require('lodash/omit'),
     get = require('lodash/get'),
     set = require('lodash/set'),
+    uniq = require('lodash/uniq'),
     flatMap = require('lodash/flatMap'),
     zip = require('lodash/zip'),
     isArray = require('lodash/isArray'),
@@ -91,10 +92,9 @@ const setVal = (data, path, tgtPath, resps) => {
     return data
 }
 
-const request = (method, url, headers, body) => {
+const request = (method, url, headers, body, original) => {
     let opts = {
         method,
-        url,
         headers: headers,
         json: true
     }
@@ -115,7 +115,11 @@ const request = (method, url, headers, body) => {
             body
         })
     }
-    return rp(opts)
+    if (original) {
+        return fetch(url, opts)
+    } else {
+        return fetch(url, opts).then(resp => resp.json())
+    }
 }
 
 // response
@@ -127,11 +131,13 @@ app.use(async ctx => {
         const body = ctx.request.body
         const backendUrl = searchBackend(route, req.url)
 
-        let data = await request(req.method, backendUrl, headers, body)
+        const resp = await request(req.method, backendUrl, headers, body, true)
+        ctx.status = resp.status
+        let data = await resp.json()
 
         if (!!(route || {}).rules && !!data) {
             async function requestData(rule) {
-                let ids = getIds(data, rule.src)
+                let ids = uniq(getIds(data, rule.src))
                 if (ids.length === 0) return []
                 const subUrl = searchBackend(rule) + '/' + ids.join(',')
                 const subHeaders = buildHeaders(rule, ctx.header)
