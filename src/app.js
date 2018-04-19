@@ -1,5 +1,4 @@
 const Koa = require('koa'),
-    fetch = require('isomorphic-fetch'),
     rp = require('request-promise'),
     koaBody = require('koa-body'),
     logger = require('koa-logger'),

@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "commander": "^2.15.1",
-    "isomorphic-fetch": "^2.2.1",
     "koa": "^2.5.0",
     "koa-body": "^2.5.0",
     "koa-logger": "^3.2.0",
