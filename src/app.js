@@ -25,9 +25,12 @@ searchRoute = (url) => {
     return setting.routes.filter(item => parsed.pathname.indexOf(item.frontend) > -1)[0]
 }
 
-searchBackend = (route, url) => {
+searchBackend = (route) => {
     const backendRef = !!route ? route.backendRef : 'default'
-    const backend = setting.backends.filter(item => item.name === backendRef)[0]
+    return setting.backends.filter(item => item.name === backendRef)[0]
+}
+
+searchBackendUrl = (backend, route, url) => {
     if (!!route) {
         if (route.removePrefix) {
             if (typeof (route.removePrefix) === 'string') {
@@ -143,7 +146,8 @@ app.use(async ctx => {
         const route = searchRoute(req.url)
         const headers = buildHeaders(route, ctx.header)
         const body = ctx.request.body
-        const backendUrl = searchBackend(route, req.url)
+        const backend = searchBackend(route)
+        const backendUrl = searchBackendUrl(backend, route, req.url)
 
         const resp = await request(req.method, backendUrl, headers, body, true)
         ctx.status = resp.status
@@ -153,9 +157,16 @@ app.use(async ctx => {
             async function requestData(rule) {
                 let ids = uniq(getIds(data, rule.src))
                 if (ids.length === 0) return []
-                const subUrl = searchBackend(rule) + '/' + ids.join(',')
-                const subHeaders = buildHeaders(rule, ctx.header)
-                return request('GET', subUrl, subHeaders, {})
+                const subBackend = searchBackend(rule)
+                if (subBackend.method === 'POST') {
+                    const subUrl = searchBackendUrl(subBackend, rule)
+                    const subHeaders = buildHeaders(rule, ctx.header)
+                    return request(subBackend.method, subUrl, subHeaders, ids)
+                } else {
+                    const subUrl = searchBackendUrl(subBackend, rule) + '/' + ids.join(',')
+                    const subHeaders = buildHeaders(rule, ctx.header)
+                    return request('GET', subUrl, subHeaders, {})
+                }
             }
             const promises = route.rules.map(requestData)
             let resps = await Promise.all(promises)
