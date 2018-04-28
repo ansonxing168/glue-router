@@ -95,6 +95,7 @@ const setVal = (data, path, tgtPath, resps) => {
     return data
 }
 
+let respHeader
 const request = (method, url, headers, body, includeStatus) => {
     let opts = {
         method,
@@ -102,6 +103,7 @@ const request = (method, url, headers, body, includeStatus) => {
         headers: headers,
         json: true,
         transform: (body, response) => {
+            respHeader = response.headers
             if (includeStatus) {
                 return {
                     status: response.statusCode,
@@ -152,7 +154,7 @@ app.use(async ctx => {
         const resp = await request(req.method, backendUrl, headers, body, true)
         ctx.status = resp.status
         let data = resp.body
-
+        
         if (!!(route || {}).rules && !!data) {
             async function requestData(rule) {
                 let ids = uniq(getIds(data, rule.src))
@@ -183,6 +185,7 @@ app.use(async ctx => {
         } else {
             ctx.body = data
         }
+        ctx.set(omit(respHeader, ['Content-Length', 'transfer-encoding', 'server', 'x-application-context']));
     } catch (error) {
         console.log(error);
         ctx.status = error.statusCode || 400
@@ -192,9 +195,9 @@ app.use(async ctx => {
 
 let port = 3000
 program
-    .version('0.1.0')
-    .option('-i, --input [value]', 'set config file', function (arg) {
-        const data = fs.readFileSync(arg, 'utf8');
+.version('0.1.0')
+.option('-i, --input [value]', 'set config file', function (arg) {
+    const data = fs.readFileSync(arg, 'utf8');
         console.log(`Set config file: ${arg}`);
         setting = JSON.parse(data)
     })
