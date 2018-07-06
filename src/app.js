@@ -22,7 +22,7 @@ app.use(koaBody({
 
 searchRoute = (url) => {
     const parsed = parse(url)
-    return setting.routes.filter(item => parsed.pathname.indexOf(item.frontend) > -1)[0]
+    return setting.routes.filter(item => parsed.pathname.indexOf(item.frontend) > -1).pop()
 }
 
 searchBackend = (route) => {
