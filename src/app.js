@@ -150,11 +150,17 @@ app.use(async ctx => {
         const body = ctx.request.body
         const backend = searchBackend(route)
         const backendUrl = searchBackendUrl(backend, route, req.url)
+        if (route.contentType === 'application/octet-stream') {
+            ctx.body = rp(backendUrl, {
+                headers
+            })
+            return
+        }
 
         const resp = await request(req.method, backendUrl, headers, body, true)
         ctx.status = resp.status
         let data = resp.body
-        
+
         if (!!(route || {}).rules && !!data) {
             async function requestData(rule) {
                 let ids = uniq(getIds(data, rule.src))
@@ -195,9 +201,9 @@ app.use(async ctx => {
 
 let port = 3000
 program
-.version('0.1.0')
-.option('-i, --input [value]', 'set config file', function (arg) {
-    const data = fs.readFileSync(arg, 'utf8');
+    .version('0.1.0')
+    .option('-i, --input [value]', 'set config file', function (arg) {
+        const data = fs.readFileSync(arg, 'utf8');
         console.log(`Set config file: ${arg}`);
         setting = JSON.parse(data)
     })
