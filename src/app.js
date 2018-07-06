@@ -150,7 +150,7 @@ app.use(async ctx => {
         const body = ctx.request.body
         const backend = searchBackend(route)
         const backendUrl = searchBackendUrl(backend, route, req.url)
-        if (route.contentType === 'application/octet-stream') {
+        if ((route || {}).contentType === 'application/octet-stream') {
             ctx.body = rp(backendUrl, {
                 headers
             })
