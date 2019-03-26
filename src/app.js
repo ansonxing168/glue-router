@@ -194,8 +194,9 @@ app.use(async ctx => {
         ctx.set(omit(respHeader, ['Content-Length', 'transfer-encoding', 'server', 'x-application-context']));
     } catch (error) {
         console.log(error);
-        ctx.status = error.statusCode || 400
-        ctx.body = error.response ? error.response.body : error
+        const status = error.statusCode || 400
+        const msg = error.message
+        ctx.throw(msg, status)
     }
 });
 

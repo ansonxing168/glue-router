@@ -5,6 +5,7 @@
   "license": "MIT",
   "author": "anson",
   "scripts": {
+    "mock": "node ./src/mock.js",
     "dev": "node ./src/app.js -i ./router.json -p 3000",
     "start": "node ./src/app.js"
   },
@@ -17,5 +18,8 @@
     "request": "^2.85.0",
     "request-promise": "^4.2.2",
     "url-parse": "^1.2.0"
+  },
+  "devDependencies": {
+    "json-server": "^0.14.2"
   }
 }
