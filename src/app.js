@@ -195,8 +195,7 @@ app.use(async ctx => {
     } catch (error) {
         console.log(error);
         const status = error.statusCode || 400
-        const msg = error.message
-        ctx.throw(msg, status)
+        ctx.throw(status, JSON.stringify(error))
     }
 });
 
