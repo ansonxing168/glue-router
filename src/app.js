@@ -151,8 +151,15 @@ app.use(async ctx => {
         const backend = searchBackend(route)
         const backendUrl = searchBackendUrl(backend, route, req.url)
         if ((route || {}).contentType === 'application/octet-stream') {
-            ctx.body = rp(backendUrl, {
-                headers
+            ctx.body = await rp({
+                url: backendUrl,
+                resolveWithFullResponse: true,
+                encoding: null,
+                headers,
+                transform: (body, response) => {
+                    ctx.set(omit(response.headers, ['Content-Length', 'transfer-encoding', 'server', 'x-application-context']));
+                    return body
+                }
             })
             return
         }
