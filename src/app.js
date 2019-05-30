@@ -101,6 +101,8 @@ const request = (method, url, headers, body, includeStatus) => {
         method,
         url,
         headers: headers,
+        encoding: null,
+        resolveWithFullResponse: true,
         json: true,
         transform: (body, response) => {
             respHeader = response.headers
@@ -150,19 +152,6 @@ app.use(async ctx => {
         const body = ctx.request.body
         const backend = searchBackend(route)
         const backendUrl = searchBackendUrl(backend, route, req.url)
-        if ((route || {}).contentType === 'application/octet-stream') {
-            ctx.body = await rp({
-                url: backendUrl,
-                resolveWithFullResponse: true,
-                encoding: null,
-                headers,
-                transform: (body, response) => {
-                    ctx.set(omit(response.headers, ['Content-Length', 'transfer-encoding', 'server', 'x-application-context']));
-                    return body
-                }
-            })
-            return
-        }
 
         const resp = await request(req.method, backendUrl, headers, body, true)
         ctx.status = resp.status
@@ -200,7 +189,6 @@ app.use(async ctx => {
         }
         ctx.set(omit(respHeader, ['Content-Length', 'transfer-encoding', 'server', 'x-application-context']));
     } catch (error) {
-        console.log(error);
         const status = error.statusCode || 400
         ctx.throw(status, JSON.stringify(error.response.body))
     }
